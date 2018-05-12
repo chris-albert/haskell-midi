@@ -5,37 +5,49 @@ import qualified Args
 import qualified Data.ByteString.Lazy.Char8 as C8
 import qualified Data.Binary.Get as BG
 import qualified Data.Word as DW
+import qualified Data.Bits as B
+import qualified Data.Binary.Strict.BitGet as BiG
+import qualified Division as D
 import Data.Int
+import Data.Word
 
-data ChunkType = Header | Track deriving (Show)
-
-data Chunk = Chunk
-  {
-    chunkType :: ChunkType,
-    length    :: Int32,
-    body      :: BSL.ByteString
-  } 
+data Chunk = 
+  Header 
+    {
+      length   :: Word32,
+      format   :: Word16,
+      tracks   :: Word16,
+      division :: D.Division
+    }
+  |
+  Track
+    {
+      length :: Word32,
+      body :: BSL.ByteString
+    }
   deriving (Show)
 
---data Chunk2 = 
---  Header 
---    {
---      length :: Int32
---    }
---  |
---  Track
---    {
---      length :: Int32
---    }
---  deriving (Show)
+parseHeader :: Word32 -> BSL.ByteString -> Chunk
+parseHeader l bs =
+  let get = do
+          format   <- BG.getWord16be
+          tracks   <- BG.getWord16be
+          division <- BG.getByteString 2
+          return (format,tracks,division)
+      (f,t,d) = BG.runGet get bs
+   in Header l f t $ D.parseDivision d 
 
-parseChunkType :: String -> ChunkType
-parseChunkType "\"MThd\"" = Header
-parseChunkType "\"MTrk\"" = Track
-parseChunkType ct         = error $ "Invalid chunk type [" ++ ct ++ "]"
+parseTrack :: Word32 -> BSL.ByteString -> Chunk
+parseTrack l bs = Track l bs 
+
+parseChunkType :: String -> Word32 -> BSL.ByteString -> Chunk
+parseChunkType "\"MThd\"" l bs = parseHeader l bs
+parseChunkType "\"MTrk\"" l bs = parseTrack l bs
+parseChunkType ct _ _         = error $ "Invalid chunk type [" ++ ct ++ "]"
 
 renderChunk :: Chunk -> String
-renderChunk c = (show $ chunkType c) ++ " [" ++ (show $ Midi.length c) ++ "]" 
+renderChunk b @ (Header _ _ _ _) = show b
+renderChunk (Track l b)  = "Track"
 
 parseMidi :: Args.MidiArgs -> IO [String]
 parseMidi filename = do
@@ -43,16 +55,12 @@ parseMidi filename = do
   let chunks = toChunks bs
   return $ fmap renderChunk chunks
 
-parseHeader :: BSL.ByteString -> String 
-parseHeader _ = error "NI"
-
 parseChunk :: BG.Get Chunk
 parseChunk = do 
   chunk  <- BG.getByteString 4
-  length <- BG.getInt32be
+  length <- BG.getWord32be
   body   <- BG.getLazyByteString $ fromIntegral length
-  let ct  = parseChunkType $ show chunk
-  return $ Chunk ct length body
+  return $ parseChunkType (show chunk) length body
 
 parseChunks :: BG.Get [Chunk]
 parseChunks = do
