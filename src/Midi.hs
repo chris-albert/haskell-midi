@@ -47,7 +47,7 @@ parseChunkType ct _ _         = error $ "Invalid chunk type [" ++ ct ++ "]"
 
 renderChunk :: Chunk -> String
 renderChunk b @ (Header _ _ _ _) = show b
-renderChunk (Track l b)  = "Track"
+renderChunk (Track l b)  = "Track {length = " ++ (show l) ++ "}"
 
 parseMidi :: Args.MidiArgs -> IO [String]
 parseMidi filename = do
