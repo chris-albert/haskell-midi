@@ -9,24 +9,16 @@ import qualified Data.Binary as DB
 import Data.Word
 
 
-import Numeric (showHex, showIntAtBase)
-import Data.Char (intToDigit)
-import qualified Data.ByteString.Char8 as C8
+printBoolArray :: [Bool] -> String
+printBoolArray b = (\x -> if x then '1' else '0') <$> b
 
-
-printBin :: Int -> String
-printBin i = showIntAtBase 2 intToDigit i ""
+printRuler :: String
+printRuler = concat $ const "76543210" <$> [0..3]
 
 main :: IO ()
 main = do 
   putStrLn ""
   putStrLn "Running Tests"
-  let a = encode (0X7F :: Word8)
-      b = 0X7F :: Word8
-  print a
-  print $ fromIntegral b
-  print $ BS.unpack a
-  print $ C8.readInt a
   defaultMain tests
 
 tests :: TestTree
@@ -48,8 +40,13 @@ parse = testGroup "Parse Var Length"
     testCase "8100 hex should be 128" $
       VL.parseVarLength (encode (0X8100 :: Word16)) @?= Just 128,
     testCase "FF7F hex should be 16383" $
-      VL.parseVarLength (encode (0XFF7F :: Word16)) @?= Just 16383
-
+      VL.parseVarLength (encode (0XFF7F :: Word16)) @?= Just 16383,
+    testCase "8768 hex should be 1000" $
+      VL.parseVarLength (encode (0X8768 :: Word16)) @?= Just 1000,
+    testCase "BD8440 hex should be 1000000" $
+      VL.parseVarLength (encode (0X80BD8440 :: Word32)) @?= Just 1000000,
+    testCase "FFFFFF7F hex should be 268435455" $
+      VL.parseVarLength (encode (0XFFFFFF7F :: Word32)) @?= Just 268435455
   ]
 
 
