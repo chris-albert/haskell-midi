@@ -7,6 +7,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString as BS   
 import qualified Data.Binary as DB
 import Data.Word
+import qualified EventParsingSpec
 
 
 printBoolArray :: [Bool] -> String
@@ -25,7 +26,8 @@ tests :: TestTree
 tests = testGroup "Properties"
   [
     parse,
-    parseWithRemainder 
+    parseWithRemainder,
+    EventParsingSpec.tests 
   ]
 
 encode :: DB.Binary a => a -> BS.ByteString
