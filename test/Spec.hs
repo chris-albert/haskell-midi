@@ -35,28 +35,28 @@ parse :: TestTree
 parse = testGroup "Parse Var Length (No remainder bytes)"
   [
     testCase "00 hex should be 0" $
-      VL.parseVarLength (encode (0X00 :: Word8)) @?= Just (0, BS.empty),
+      VL.parseVarLength (encode (0X00 :: Word8)) @?= (0, BS.empty),
     testCase "7F hex should be 127" $
-      VL.parseVarLength (encode (0X7F :: Word8)) @?= Just (127, BS.empty),
+      VL.parseVarLength (encode (0X7F :: Word8)) @?= (127, BS.empty),
     testCase "8100 hex should be 128" $
-      VL.parseVarLength (encode (0X8100 :: Word16)) @?= Just (128, BS.empty),
+      VL.parseVarLength (encode (0X8100 :: Word16)) @?= (128, BS.empty),
     testCase "FF7F hex should be 16383" $
-      VL.parseVarLength (encode (0XFF7F :: Word16)) @?= Just (16383, BS.empty),
+      VL.parseVarLength (encode (0XFF7F :: Word16)) @?= (16383, BS.empty),
     testCase "8768 hex should be 1000" $
-      VL.parseVarLength (encode (0X8768 :: Word16)) @?= Just (1000, BS.empty),
+      VL.parseVarLength (encode (0X8768 :: Word16)) @?= (1000, BS.empty),
     testCase "BD8440 hex should be 1000000" $
-      VL.parseVarLength (encode (0X80BD8440 :: Word32)) @?= Just (1000000, BS.empty),
+      VL.parseVarLength (encode (0X80BD8440 :: Word32)) @?= (1000000, BS.empty),
     testCase "FFFFFF7F hex should be 268435455" $
-      VL.parseVarLength (encode (0XFFFFFF7F :: Word32)) @?= Just (268435455, BS.empty)
+      VL.parseVarLength (encode (0XFFFFFF7F :: Word32)) @?= (268435455, BS.empty)
   ]
 
 parseWithRemainder :: TestTree
 parseWithRemainder = testGroup "Parse var length (With remainder bytes)"
   [
     testCase "00 hex should be 0" $
-      VL.parseVarLength (encode (0X00FF :: Word16)) @?= Just (0, encode (0XFF :: Word8)),
+      VL.parseVarLength (encode (0X00FF :: Word16)) @?= (0, encode (0XFF :: Word8)),
     testCase "8100 hex should be 128" $
-      VL.parseVarLength (encode (0X8100FFFF :: Word32)) @?= Just (128, encode (0XFFFF :: Word16)),
+      VL.parseVarLength (encode (0X8100FFFF :: Word32)) @?= (128, encode (0XFFFF :: Word16)),
     testCase "FFFFFF7F hex should be 268435455" $
-      VL.parseVarLength (encode (0XFFFFFF7F01FFAABB :: Word64)) @?= Just (268435455, encode (0X01FFAABB :: Word32))
+      VL.parseVarLength (encode (0XFFFFFF7F01FFAABB :: Word64)) @?= (268435455, encode (0X01FFAABB :: Word32))
   ]

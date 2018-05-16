@@ -39,6 +39,8 @@ library
     , Args 
     , Division
     , VariableLengthInt
+    , Event
+    , EventParsing
   other-modules:
       Paths_haskell_midi
   default-language: Haskell2010

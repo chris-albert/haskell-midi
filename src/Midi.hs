@@ -9,6 +9,8 @@ import qualified Data.Bits as B
 import qualified Data.Binary.Strict.BitGet as BiG
 import qualified Division as D
 import qualified VariableLengthInt as VL
+import qualified Event as E
+import qualified EventParsing as EP
 import Data.Int
 import Data.Word
 
@@ -23,10 +25,9 @@ data Chunk =
   |
   Track
     {
-      length :: Word32,
-      actualLength :: Int64,
-      deltaTime :: Maybe Word32,
-      body :: BSL.ByteString
+      length    :: Word32,
+      deltaTime :: Word32,
+      event     :: [E.Event]
     }
   deriving (Show)
 
@@ -41,9 +42,10 @@ parseHeader l bs =
    in Header l f t $ D.parseDivision d 
 
 parseTrack :: Word32 -> BSL.ByteString -> Chunk
-parseTrack l bs = Track l (BSL.length bs) dt bs 
+parseTrack l bs = Track l dt ts
   where vl = VL.parseVarLength $ BSL.toStrict bs
-        dt = fst <$> vl
+        dt = fst vl
+        ts = snd $ EP.parseEvents $ BSL.fromStrict $ snd vl
 
 parseChunkType :: String -> Word32 -> BSL.ByteString -> Chunk
 parseChunkType "\"MThd\"" l bs = parseHeader l bs
@@ -51,8 +53,7 @@ parseChunkType "\"MTrk\"" l bs = parseTrack l bs
 parseChunkType ct _ _         = error $ "Invalid chunk type [" ++ ct ++ "]"
 
 renderChunk :: Chunk -> String
-renderChunk b @ (Header _ _ _ _) = show b
-renderChunk (Track l al dt b)  = "Track {length = " ++ (show l) ++ ", deltaTime = " ++ (show dt) ++", actualLength = " ++ (show al) ++ "}"
+renderChunk = show
 
 parseMidi :: Args.MidiArgs -> IO [String]
 parseMidi filename = do
