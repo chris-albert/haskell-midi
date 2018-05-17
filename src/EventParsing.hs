@@ -7,27 +7,32 @@ import Data.Word
 
 
 parseEvents :: BSL.ByteString -> (BSL.ByteString, [E.Event])
-parseEvents bs = (bs,[])
-  where (e, rbs) = case BG.runBitGet (BSL.toStrict bs) getStatus of 
-                     Left e      -> error $ "parseEvents: " ++ e
-                     Right (s,c) -> dispatch s c (BSL.drop 2 bs)
+parseEvents bs = error "NI" 
 
-dispatch :: Word8 -> Word8 -> BSL.ByteString -> (E.Event, BSL.ByteString)
-dispatch 0x08 c bs = (E.MidiEvent $ E.NoteOff c k v, r)
-  where (k,v,r) = extract2 bs 
-dispatch 0x09 c bs = (E.MidiEvent $ E.NoteOn c k v, r)
-  where (k,v,r) = extract2 bs
-dispatch _ _ _  = error "NI"
+dispatch :: Word8 -> Word8 -> BG.BitGet E.Event
+dispatch 0X08 c = (\(k,v) -> E.MidiEvent $ E.NoteOff c k v) <$> extract2
+dispatch 0X09 c = (\(k,v) -> E.MidiEvent $ E.NoteOn c k v) <$> extract2
+dispatch _ _ = error "NI"
 
-extract2 :: BSL.ByteString -> (Word8, Word8, BSL.ByteString)
-extract2 bs = (rf,rs,BSL.drop 2 bs)
-  where get = do
-            f <- BG.getWord8
-            s <- BG.getWord8
-            return (f,s)
-        (rf, rs, r) = case BG.runBitGet (BSL.toStrict bs) get of
-          Left e      -> error $ "extract2: " ++ e
-          Right (a,b) -> (a,b,bs)
+getEvent :: BG.BitGet E.Event
+getEvent = do
+  (s,c) <- getStatus
+  dispatch s c
+
+getEvents :: BG.BitGet [E.Event]
+getEvents = do
+  empty <- BG.isEmpty
+  if empty
+     then return []
+     else do event  <- getEvent
+             events <- getEvents
+             return (event:events)
+
+extract2 :: BG.BitGet (Word8, Word8)
+extract2 = do
+  f <- BG.getWord8
+  s <- BG.getWord8
+  return (f,s)
 
 getStatus :: BG.BitGet (Word8, Word8)
 getStatus = do
