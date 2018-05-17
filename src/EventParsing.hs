@@ -5,10 +5,6 @@ import qualified Data.Binary.Strict.BitGet as BG
 import qualified Event as E
 import Data.Word
 
-
-parseEvents :: BSL.ByteString -> (BSL.ByteString, [E.Event])
-parseEvents bs = error "NI" 
-
 dispatch :: Word8 -> Word8 -> BG.BitGet E.Event
 dispatch 0X08 c = (\(k,v) -> E.MidiEvent $ E.NoteOff c k v) <$> extract2
 dispatch 0X09 c = (\(k,v) -> E.MidiEvent $ E.NoteOn c k v) <$> extract2

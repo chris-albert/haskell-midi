@@ -11,15 +11,8 @@ import qualified Data.Bits as B
 import Data.Int
 import Data.Word
 
-parseVarLength :: BS.ByteString -> (Word32, BS.ByteString)
-parseVarLength bs = 
-  case BG.runBitGet bs getWords of 
-    Left e   -> (0,bs)
-    Right ws -> (o, BS.drop (length ws) bs)
-      where o = removeContinueBits $ DB.decode $ BSL.fromStrict $ BS.pack $ padWord ws
-
-parseVarLength' :: BG.BitGet Word32
-parseVarLength' = do
+parseVarLength :: BG.BitGet Word32
+parseVarLength = do
   ws <- getWords
   return $ removeContinueBits $ DB.decode $ BSL.fromStrict $ BS.pack $ padWord ws
 
