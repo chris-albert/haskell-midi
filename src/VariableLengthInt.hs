@@ -18,6 +18,11 @@ parseVarLength bs =
     Right ws -> (o, BS.drop (length ws) bs)
       where o = removeContinueBits $ DB.decode $ BSL.fromStrict $ BS.pack $ padWord ws
 
+parseVarLength' :: BG.BitGet Word32
+parseVarLength' = do
+  ws <- getWords
+  return $ removeContinueBits $ DB.decode $ BSL.fromStrict $ BS.pack $ padWord ws
+
 getWords :: BG.BitGet [Word8]
 getWords = do
   c <- BG.getBit

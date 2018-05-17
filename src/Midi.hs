@@ -41,6 +41,14 @@ parseHeader l bs =
       (f,t,d) = BG.runGet get bs
    in Header l f t $ D.parseDivision d 
 
+parseHeader' :: Word32 -> BG.Get Chunk
+parseHeader' l = (\(f,t,d) -> Header l f t $ D.parseDivision d) <$> get
+  where get = do
+            format   <- BG.getWord16be
+            tracks   <- BG.getWord16be
+            division <- BG.getByteString 2
+            return (format,tracks,division)
+
 parseTrack :: Word32 -> BSL.ByteString -> Chunk
 parseTrack l bs = Track l dt ts
   where vl = VL.parseVarLength $ BSL.toStrict bs
