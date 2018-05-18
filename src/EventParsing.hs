@@ -7,26 +7,28 @@ import qualified VariableLengthInt as VL
 import qualified Event as E
 import Data.Word
 
-dispatch :: Word8 -> Word8 -> BG.BitGet E.Event
+dispatch :: Word8 -> Word8 -> Word32 -> BG.BitGet E.Event
+--dispatch s c = error $ "Invalid message: [" ++ show s ++"][" ++ show c ++ "]"
 -- Midi Messages
-dispatch 0X08 c = (\(k,v) -> E.MidiEvent $ E.NoteOff c k v) <$> extract2
-dispatch 0X09 c = (\(k,v) -> E.MidiEvent $ E.NoteOn c k v) <$> extract2
-dispatch 0X0A c = (\(k,v) -> E.MidiEvent $ E.PolyphonicKeyPressure c k v) <$> extract2
-dispatch 0X0B c = (\(k,v) -> E.MidiEvent $ E.ControllerChange c k v) <$> extract2
-dispatch 0X0C c = (\k     -> E.MidiEvent $ E.ProgramChange c k) <$> extract1
-dispatch 0X0D c = (\k     -> E.MidiEvent $ E.ProgramChange c k) <$> extract1
-dispatch 0X0E c = (\(k,v) -> E.MidiEvent $ E.PitchBend c k v) <$> extract2
+dispatch 0X08 c l = (\(k,v) -> E.MidiEvent l $ E.NoteOff c k v) <$> extract2
+dispatch 0X09 c l = (\(k,v) -> E.MidiEvent l $ E.NoteOn c k v) <$> extract2
+dispatch 0X0A c l = (\(k,v) -> E.MidiEvent l $ E.PolyphonicKeyPressure c k v) <$> extract2
+dispatch 0X0B c l = (\(k,v) -> E.MidiEvent l $ E.ControllerChange c k v) <$> extract2
+dispatch 0X0C c l = (\k     -> E.MidiEvent l $ E.ProgramChange c k) <$> extract1
+dispatch 0X0D c l = (\k     -> E.MidiEvent l $ E.ProgramChange c k) <$> extract1
+dispatch 0X0E c l = (\(k,v) -> E.MidiEvent l $ E.PitchBend c k v) <$> extract2
 --Sysex Messages
-dispatch 0X0F 0X00 = E.SysexEvent <$> varLength
-dispatch 0X0F 0X07 = E.SysexEvent <$> varLength
+dispatch 0X0F 0X00 l = E.SysexEvent l <$> varLength
+dispatch 0X0F 0X07 l = E.SysexEvent l <$> varLength
 --Meta Messages
-dispatch 0X0F 0X0F = (\m -> E.MetaEvent <$> dispatchMeta m) =<< BG.getWord8
-dispatch s _ = error $ "Invalid message: " ++ show s
+dispatch 0X0F 0X0F l = (\m -> E.MetaEvent l <$> dispatchMeta m) =<< BG.getWord8
+dispatch s c l = error $ "Invalid message: [" ++ show s ++"][" ++ show c ++ "][" ++ show l ++"]"
 
 getEvent :: BG.BitGet E.Event
 getEvent = do
+  vl    <- VL.parseVarLength
   (s,c) <- getStatus
-  dispatch s c
+  dispatch s c vl
 
 getEvents :: BG.BitGet [E.Event]
 getEvents = do

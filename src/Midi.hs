@@ -26,7 +26,6 @@ data Chunk =
   Track
     {
       length    :: Word32,
-      deltaTime :: Word32,
       event     :: [E.Event]
     }
   |
@@ -43,9 +42,8 @@ parseHeader l = (\(f,t,d) -> Header l f t $ D.parseDivision d) <$> get
 
 parseTrack :: Word32 -> BG.BitGet Chunk
 parseTrack l = do
-  vl <- VL.parseVarLength
-  --es <- EP.getEvents
-  return $ Track l vl []--es
+  es <- EP.getEvents
+  return $ Track l es
 
 
 parseChunkType :: String -> Word32 -> BG.BitGet Chunk
@@ -74,7 +72,10 @@ parseChunks = do
   if empty
      then return []
      else do chunk  <- parseChunk
-             chunks <- parseChunks
+             --chunks <- parseChunks
+             chunks <- case chunk of
+                         Invalid -> return []
+                         _       -> parseChunks
              return (chunk:chunks)
 
 toChunks :: BSL.ByteString -> Either String [Chunk]

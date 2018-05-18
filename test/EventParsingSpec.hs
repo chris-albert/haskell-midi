@@ -12,6 +12,8 @@ import Util
 
 tests = testGroup "Event Parsing"
   [
+    testCase "90 should be 9 and 0" $
+      BG.runBitGet (encode (0X90 :: Word8)) EP.getStatus @?= Right (9 :: Word8,0 :: Word8),
     testCase "81 should be 8 and 1" $
       BG.runBitGet (encode (0X81 :: Word8)) EP.getStatus @?= Right (8 :: Word8,1 :: Word8),
     testCase "FF should be 15 and 15" $

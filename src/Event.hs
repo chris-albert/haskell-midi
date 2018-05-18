@@ -7,16 +7,19 @@ import Data.Word
 data Event = 
   MidiEvent 
     {
+      deltaTime :: Word32,
       midiMessage :: MidiMessage
     }
   |
   SysexEvent 
     {
+      deltaTime :: Word32,
       sysexData :: BS.ByteString
     }
   | 
   MetaEvent 
     {
+      deltaTime :: Word32,
       metaMessage :: MetaMessage
     }
   deriving (Show)
