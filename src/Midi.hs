@@ -28,8 +28,6 @@ data Chunk =
       length    :: Word32,
       event     :: [E.Event]
     }
-  |
-  Invalid
   deriving (Show)
 
 parseHeader :: Word32 -> BG.BitGet Chunk
@@ -49,16 +47,12 @@ parseTrack l = do
 parseChunkType :: String -> Word32 -> BG.BitGet Chunk
 parseChunkType "\"MThd\"" l = parseHeader l
 parseChunkType "\"MTrk\"" l = parseTrack l
-parseChunkType ct _         = return Invalid --error $ "Invalid chunk type [" ++ ct ++ "]"
+parseChunkType ct _         = error $ "Invalid chunk type [" ++ ct ++ "]"
 
-renderChunk :: Either String [Chunk] -> [String]
-renderChunk (Right cs) = show <$> cs
-renderChunk (Left e)   = ["Error: " ++ e]
-
-parseMidi :: Args.MidiArgs -> IO [String]
+parseMidi :: Args.MidiArgs -> IO [Chunk]
 parseMidi filename = do
   bs <- BSL.readFile $ Args.file filename
-  return $ renderChunk $ toChunks bs           
+  eitherToIO $ toChunks bs           
   
 parseChunk :: BG.BitGet Chunk
 parseChunk = do 
@@ -72,11 +66,12 @@ parseChunks = do
   if empty
      then return []
      else do chunk  <- parseChunk
-             --chunks <- parseChunks
-             chunks <- case chunk of
-                         Invalid -> return []
-                         _       -> parseChunks
+             chunks <- parseChunks
              return (chunk:chunks)
 
 toChunks :: BSL.ByteString -> Either String [Chunk]
 toChunks bs = BG.runBitGet (BSL.toStrict bs) parseChunks
+
+eitherToIO :: Either String a -> IO a
+eitherToIO (Right v) = return v
+eitherToIO (Left s)  = error $ "Error: " ++ s
