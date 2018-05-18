@@ -1,6 +1,7 @@
 module Event where
 
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString as BS
 import Data.Word
 
 data Event = 
@@ -8,11 +9,10 @@ data Event =
     {
       midiMessage :: MidiMessage
     }
-  | 
+  |
   SysexEvent 
     {
-      length    :: Word32,
-      sysexData :: BSL.ByteString
+      sysexData :: BS.ByteString
     }
   | 
   MetaEvent 
@@ -99,37 +99,37 @@ data MetaMessage =
   |
   TextEvent
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   CopyrightNotice
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   TrackName
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   InstrumentName
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   Lyric
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   Marker
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   CuePoint
     {
-      text :: BSL.ByteString
+      text :: BS.ByteString
     }
   |
   MidiChannelPrefix
@@ -169,7 +169,7 @@ data MetaMessage =
   SequencerMetaEvent
     {
       id :: Word32,
-      body :: BSL.ByteString
+      body :: BS.ByteString
     }
   deriving (Show)
 

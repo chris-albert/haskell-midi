@@ -1,6 +1,7 @@
 module Midi where
 
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString as BS
 import qualified Args
 import qualified Data.ByteString.Lazy.Char8 as C8
 import qualified Data.Word as DW
@@ -35,7 +36,7 @@ parseHeader l = (\(f,t,d) -> Header l f t $ D.parseDivision d) <$> get
   where get = do
             format   <- BG.getWord16be
             tracks   <- BG.getWord16be
-            division <- BG.getLeftByteString 2
+            division <- BG.getLeftByteString 16
             return (format,tracks,division)
 
 parseTrack :: Word32 -> BG.BitGet Chunk
@@ -57,12 +58,11 @@ renderChunk (Left e)   = ["Error: " ++ e]
 parseMidi :: Args.MidiArgs -> IO [String]
 parseMidi filename = do
   bs <- BSL.readFile $ Args.file filename
-  let chunks = toChunks bs
-  return $ renderChunk chunks
-
+  return $ renderChunk $ toChunks bs           
+  
 parseChunk :: BG.BitGet Chunk
 parseChunk = do 
-  chunk  <- BG.getLeftByteString 4
+  chunk  <- BG.getLeftByteString 32
   length <- BG.getWord32be
   parseChunkType (show chunk) length
 
@@ -72,8 +72,8 @@ parseChunks = do
   if empty
      then return []
      else do chunk  <- parseChunk
-             --chunks <- parseChunks
-             return [chunk]--(chunk:chunks)
+             chunks <- parseChunks
+             return (chunk:chunks)
 
 toChunks :: BSL.ByteString -> Either String [Chunk]
 toChunks bs = BG.runBitGet (BSL.toStrict bs) parseChunks
