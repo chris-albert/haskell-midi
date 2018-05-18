@@ -21,7 +21,7 @@ dispatch 0X0F 0X00 = E.SysexEvent <$> varLength
 dispatch 0X0F 0X07 = E.SysexEvent <$> varLength
 --Meta Messages
 dispatch 0X0F 0X0F = (\m -> E.MetaEvent <$> dispatchMeta m) =<< BG.getWord8
-dispatch s _ = error $ "NI: " ++ show s
+dispatch s _ = error $ "Invalid message: " ++ show s
 
 getEvent :: BG.BitGet E.Event
 getEvent = do
@@ -63,6 +63,11 @@ dispatchMeta 0X06 = E.Marker <$> varLength
 dispatchMeta 0X07 = E.CuePoint <$> varLength
 dispatchMeta 0X20 = const (E.MidiChannelPrefix <$> BG.getWord8) =<< BG.getWord8
 dispatchMeta 0X2F = const E.EndOfTrack <$> BG.getWord8
+dispatchMeta 0X51 = const (E.SetTempo <$> get24Bit) =<< BG.getWord8
+dispatchMeta 0X54 = const (E.SMTPEOffset <$> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8) =<< BG.getWord8
+dispatchMeta 0X58 = const (E.TimeSignature <$> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8) =<< BG.getWord8
+dispatchMeta 0X59 = const (E.KeySignature <$> BG.getWord8 <*> BG.getWord8) =<< BG.getWord8
+dispatchMeta 0X7F = E.SequencerMetaEvent <$> varLength
 dispatchMeta _    = error ""
 
 varLength ::BG.BitGet BS.ByteString
@@ -70,3 +75,6 @@ varLength = varLengthByteString =<< VL.parseVarLength
 
 varLengthByteString :: Word32 -> BG.BitGet BS.ByteString
 varLengthByteString = BG.getLeftByteString . (8 *) . fromIntegral
+
+get24Bit :: BG.BitGet Word32
+get24Bit = (\a b c -> VL.getWord32 [a,b,c]) <$> BG.getWord8 <*> BG.getWord8 <*> BG.getWord8

@@ -168,7 +168,6 @@ data MetaMessage =
   |
   SequencerMetaEvent
     {
-      id :: Word32,
       body :: BS.ByteString
     }
   deriving (Show)

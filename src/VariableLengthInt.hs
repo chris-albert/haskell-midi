@@ -14,7 +14,7 @@ import Data.Word
 parseVarLength :: BG.BitGet Word32
 parseVarLength = do
   ws <- getWords
-  return $ removeContinueBits $ DB.decode $ BSL.fromStrict $ BS.pack $ padWord ws
+  return $ removeContinueBits $ getWord32 ws
 
 getWords :: BG.BitGet [Word8]
 getWords = do
@@ -30,6 +30,9 @@ padWord [x]     = [0,0,0,x]
 padWord [x,y]   = [0,0,x,y]
 padWord [x,y,z] = [0,x,y,z]
 padWord x       = x
+
+getWord32 :: [Word8] -> Word32
+getWord32 = DB.decode . BSL.fromStrict . BS.pack . padWord
 
 removeContinueBits :: Word32 -> Word32
 removeContinueBits w = convertFromBits $ [False,False,False,False] ++ removed
