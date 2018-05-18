@@ -29,6 +29,8 @@ data Chunk =
       deltaTime :: Word32,
       event     :: [E.Event]
     }
+  |
+  Invalid
   deriving (Show)
 
 parseHeader :: Word32 -> BG.BitGet Chunk
@@ -42,14 +44,14 @@ parseHeader l = (\(f,t,d) -> Header l f t $ D.parseDivision d) <$> get
 parseTrack :: Word32 -> BG.BitGet Chunk
 parseTrack l = do
   vl <- VL.parseVarLength
-  es <- EP.getEvents
-  return $ Track l vl es
+  --es <- EP.getEvents
+  return $ Track l vl []--es
 
 
 parseChunkType :: String -> Word32 -> BG.BitGet Chunk
 parseChunkType "\"MThd\"" l = parseHeader l
 parseChunkType "\"MTrk\"" l = parseTrack l
-parseChunkType ct _         = error $ "Invalid chunk type [" ++ ct ++ "]"
+parseChunkType ct _         = return Invalid --error $ "Invalid chunk type [" ++ ct ++ "]"
 
 renderChunk :: Either String [Chunk] -> [String]
 renderChunk (Right cs) = show <$> cs
