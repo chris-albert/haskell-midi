@@ -17,6 +17,3 @@ getEvent :: Int -> Midi.Chunk -> [String]
 getEvent _ h @ Midi.Header{} = [show h]
 getEvent i (Midi.Track _ events)     = show <$> take i events
 
-
---getBeatsPerMinute :: Word32 -> Float
---getBeatsPerMinute s = 60 / (s / 1000000)

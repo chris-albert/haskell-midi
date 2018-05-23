@@ -41,6 +41,7 @@ library
     , VariableLengthInt
     , Event
     , EventParsing
+    , EventInterp
   other-modules:
       Paths_haskell_midi
   default-language: Haskell2010
