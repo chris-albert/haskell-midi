@@ -1,6 +1,7 @@
 module Main where
 import qualified Midi
 import qualified Args
+import qualified EventInterp as EI
 import Data.Word
 
 main :: IO ()
@@ -15,5 +16,5 @@ getEvents i cs = concat $ getEvent i <$> cs
       
 getEvent :: Int -> Midi.Chunk -> [String]
 getEvent _ h @ Midi.Header{} = [show h]
-getEvent i (Midi.Track _ events)     = show <$> take i events
+getEvent i (Midi.Track _ events)     = show <$> EI.eventsToTime (take i events)
 

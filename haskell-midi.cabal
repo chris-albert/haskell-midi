@@ -34,6 +34,7 @@ library
     , cmdargs  
     , binary
     , binary-strict
+    , mtl
   exposed-modules:
       Midi
     , Args 
