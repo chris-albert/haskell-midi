@@ -35,6 +35,7 @@ library
     , binary
     , binary-strict
     , mtl
+    , time-units
   exposed-modules:
       Midi
     , Args 

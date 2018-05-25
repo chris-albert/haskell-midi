@@ -3,6 +3,7 @@ module EventInterp where
 import qualified Midi as M
 import qualified Event as E
 import qualified Text.Printf as TP
+import qualified Data.Time.Units as DTU
 import Control.Monad.State
 import Data.Word
 
@@ -37,22 +38,32 @@ getBeatsPerMinute :: Word32 -> Double
 getBeatsPerMinute s = 60 / (fromIntegral s / 1000000)
 
 data EventWithTime = EventWithTime {
-  time :: Word32,
+  time :: Double,
   eventInterp :: EventInterp
 }
 
 instance Show EventWithTime where
   show (EventWithTime t ei) = TP.printf "%s - %s" (convertToTime t) $ show ei
 
-mapWithTime :: (Word32, [E.Event]) -> [EventWithTime]
-mapWithTime (_, []) = []
-mapWithTime (time, e:es) = EventWithTime newTime (mapToInterp e) : mapWithTime (newTime,es)
-  where newTime = time + E.deltaTime e
+mapWithTime :: Word16 -> Double -> Double -> [E.Event] -> [EventWithTime]
+mapWithTime tpq _ _ []         = []
+mapWithTime tpq ct ticks (e:es) = EventWithTime newTime (mapToInterp e) : mapWithTime tpq ct newTime es
+  where tempo = case e of
+                  E.MetaEvent _ (E.SetTempo t) -> fromIntegral t / fromIntegral tpq
+                  _ -> ct
+        newTicks = ticks + fromIntegral (E.deltaTime e)
+        newTime = newTicks * tempo
 
-eventsToTime :: [E.Event] -> [EventWithTime]
-eventsToTime es = mapWithTime (0,es)
+eventsToTime :: Word16 -> [E.Event] -> [EventWithTime]
+eventsToTime tpq = mapWithTime tpq 10 0
 
-convertToTime :: Word32 -> String
-convertToTime w = show w
+convertToTime :: Double -> String
+convertToTime w = show s
+  where ms = DTU.fromMicroseconds (floor w :: Integer) :: DTU.Microsecond
+        mis = DTU.convertUnit ms :: DTU.Millisecond 
+        s   = DTU.convertUnit ms :: DTU.Second
+        m   = DTU.convertUnit ms :: DTU.Minute
+        h   = DTU.convertUnit ms :: DTU.Hour
+ 
 
         
